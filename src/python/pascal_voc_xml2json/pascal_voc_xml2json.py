@@ -44,7 +44,7 @@ def addImgItem(file_name, size):
     image_set.add(file_name)
     return image_id
 
-def addAnnoItem(object_name, image_id, category_id, bbox):
+def addAnnoItem(image_id, category_id, bbox):
     global annotation_id
     annotation_item = dict()
     annotation_item['segmentation'] = []
@@ -164,6 +164,25 @@ def parseXmlFiles(xml_path):
                     bbox.append(bndbox['ymax'] - bndbox['ymin'])
                     print('add annotation with {},{},{},{}'.format(object_name, current_image_id, current_category_id, bbox))
                     addAnnoItem(object_name, current_image_id, current_category_id, bbox )
+                    
+def parse_csv_file(input_path):
+    input_csv = pd.read_csv(input_path)
+    i = 0
+    tot_rows = input_csv.count().max()
+
+    for idx, row in input_csv.iterrows():
+        if row["filename"] not in image_set:
+            image_id = addImgItem(row["filename"], row)
+
+        if row["class"] not in category_set.keys():
+            addCatItem(row["class"])
+
+        bbox = [row["xmin"], row["ymin"], row["xmax"] - row["xmin"], row["ymax"] - row["ymin"]]
+
+        addAnnoItem(image_id, category_set[row["class"]], bbox)
+
+        print("processing row {}/{}".format(i, tot_rows))
+        i += 1
 
 if __name__ == '__main__':
     xml_path = 'Annotations'
